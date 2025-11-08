@@ -41,3 +41,20 @@ Next.js Docs: https://nextjs.org/docs
 Supabase Docs: https://supabase.com/docs
 Tailwind Docs: https://tailwindcss.com/docs
 Shadcn UI: https://ui.shadcn.com/
+
+
+## Dev commands:
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run production build locally
+npm start
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint

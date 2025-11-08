@@ -42,23 +42,22 @@ export default function HomePage() {
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-12 items-start center">
             <div>
-              <div className="inline-block mb-4">
-                <span className="bg-[#5A7247]/10 text-[#5A7247] px-4 py-2 rounded-full text-sm font-medium">
-                  South Africa's Race Discovery Platform
+              <div className="inline-block mb-1">
+                <span className="bg-[#5A7247]/10 text-[#5A7247] px-2 py-2 rounded-full text-sm font-medium">
+                  South Africa's Leading Race Discovery Platform
                 </span>
               </div>
-              <h1 className="text-5xl md:text-6xl font-bold text-[#2D2D2D] mb-6 leading-tight">
+              <h1 className="text-4xl md:text-4xl font-bold text-[#2D2D2D] mb-6 leading-tight">
                 Your Next
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#CC7722] to-[#E67E22]">
+                <span className="md:text-6xl block text-transparent bg-clip-text bg-gradient-to-r from-[#CC7722] to-[#E67E22]">
                   Adventure
                 </span>
                 Awaits
               </h1>
               <p className="text-xl text-[#5A5A5A] mb-8 leading-relaxed">
-                From the Drakensberg peaks to the Wild Coast trails, discover races that match your passion. 
-                Trail runs, road races, OCR challenges – all in one place.
+                Whether you race on the open roads of the Highveld, the mountain trails of the Western Cape, or the valleys of KwaZulu-Natal... Find your next challenge! Cycling, running, OCR or triathlons all in one place.
               </p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                 <Link href="/races" className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-8 py-4 rounded-full hover:shadow-xl transition-all text-center font-semibold">
@@ -100,7 +99,7 @@ export default function HomePage() {
                 </div>
               </div>
               {/* Floating card */}
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl max-w-xs">
+              {/* <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl max-w-xs">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-[#D4526E] to-[#E67E22] rounded-xl"></div>
                   <div>
@@ -108,7 +107,7 @@ export default function HomePage() {
                     <div className="text-sm text-[#5A5A5A]">Garden Route • 42km</div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -120,7 +119,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#2D2D2D] mb-4">Why RaceRadar?</h2>
             <p className="text-xl text-[#5A5A5A] max-w-2xl mx-auto">
-              Built by South African runners, for South African runners
+              Built by South African atheletes, for South African atheletes
             </p>
           </div>
 

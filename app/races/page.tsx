@@ -1,41 +1,83 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import { Search, Calendar, MapPin, TrendingUp, Filter, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+
+interface Race {
+  id: string
+  name: string
+  slug: string
+  race_date: string
+  location_city: string
+  location_province: string
+  race_type: string
+  terrain: string
+  difficulty: string
+  distances: any[]
+  image_url: string | null
+}
 
 export default function RacesPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedProvince, setSelectedProvince] = useState('All');
+  const [races, setRaces] = useState<Race[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedProvince, setSelectedProvince] = useState('all')
+  const [selectedType, setSelectedType] = useState('all')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all')
 
-  const categories = ['All', 'Trail Running', 'Road Running', 'Obstacle Course Racing', 'Triathlon', 'Cycling', 'Open Water Swimming'];
-  const provinces = ['All', 'Western Cape', 'Gauteng', 'KwaZulu-Natal', 'Eastern Cape', 'Free State', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West'];
+  useEffect(() => {
+    fetchRaces()
+  }, [selectedProvince, selectedType, selectedDifficulty])
 
-  const races = [
-    { id: 1, name: "Table Mountain Challenge", location: "Western Cape, Cape Town", date: "2025-12-15", distance: "28km", elevation: "1800m", category: "Trail Running", price: "R450", color: "from-[#4A7BA7] to-[#5A7247]" },
-    { id: 2, name: "Two Oceans Marathon", location: "Western Cape, Cape Town", date: "2026-04-18", distance: "56km", elevation: "350m", category: "Road Running", price: "R580", color: "from-[#CC7722] to-[#E67E22]" },
-    { id: 3, name: "Otter Trail Run", location: "Western Cape, Garden Route", date: "2026-05-10", distance: "42km", elevation: "2400m", category: "Trail Running", price: "R650", color: "from-[#5A7247] to-[#4A7BA7]" },
-    { id: 4, name: "Comrades Marathon", location: "KwaZulu-Natal, Durban to PMB", date: "2026-06-14", distance: "87km", elevation: "900m", category: "Road Running", price: "R520", color: "from-[#D4526E] to-[#E67E22]" },
-    { id: 5, name: "Midmar Mile", location: "KwaZulu-Natal, Howick", date: "2026-02-08", distance: "1.6km", elevation: "0m", category: "Open Water Swimming", price: "R250", color: "from-[#4A7BA7] to-[#CC7722]" },
-    { id: 6, name: "Warrior Race Pretoria", location: "Gauteng, Pretoria", date: "2026-03-22", distance: "8km", elevation: "150m", category: "Obstacle Course Racing", price: "R380", color: "from-[#E67E22] to-[#D4526E]" },
-    { id: 7, name: "Momentum 94.7 Cycle Challenge", location: "Gauteng, Johannesburg", date: "2025-11-16", distance: "94km", elevation: "600m", category: "Cycling", price: "R420", color: "from-[#5A7247] to-[#CC7722]" },
-    { id: 8, name: "Wild Coast Trail Run", location: "Eastern Cape, Coffee Bay", distance: "21km", date: "2026-07-05", elevation: "1200m", category: "Trail Running", price: "R400", color: "from-[#4A7BA7] to-[#5A7247]" },
-    { id: 9, name: "Ironman South Africa", location: "Eastern Cape, Nelson Mandela Bay", date: "2026-04-05", distance: "226km", elevation: "1500m", category: "Triathlon", price: "R3500", color: "from-[#CC7722] to-[#D4526E]" },
-  ];
+  async function fetchRaces() {
+    setLoading(true)
+    let query = supabase
+      .from('races')
+      .select('*')
+      .eq('status', 'active')
+      .gte('race_date', new Date().toISOString().split('T')[0])
+      .order('race_date', { ascending: true })
 
-  const filteredRaces = races.filter(race => {
-    const categoryMatch = selectedCategory === 'All' || race.category === selectedCategory;
-    const provinceMatch = selectedProvince === 'All' || race.location.includes(selectedProvince);
-    return categoryMatch && provinceMatch;
-  });
+    if (selectedProvince !== 'all') {
+      query = query.eq('location_province', selectedProvince)
+    }
+
+    if (selectedType !== 'all') {
+      query = query.eq('race_type', selectedType)
+    }
+
+    if (selectedDifficulty !== 'all') {
+      query = query.eq('difficulty', selectedDifficulty)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching races:', error)
+    } else {
+      setRaces(data || [])
+    }
+    setLoading(false)
+  }
+
+  const filteredRaces = races.filter((race) =>
+    race.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    race.location_city.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <div className="min-h-screen bg-[#FAF7F0]">
-      {/* Navigation */}
+      {/* Header */}
       <nav className="fixed top-0 w-full bg-[#FAF7F0]/95 backdrop-blur-sm z-50 border-b border-[#C2B280]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#CC7722] to-[#E67E22] rounded-lg"></div>
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#CC7722] to-[#E67E22] rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
               <span className="text-2xl font-bold text-[#2D2D2D]">RaceRadar</span>
             </Link>
             <div className="hidden md:flex space-x-8">
@@ -43,222 +85,284 @@ export default function RacesPage() {
               <Link href="/races" className="text-[#CC7722] font-semibold">Discover Races</Link>
               <Link href="/about" className="text-[#2D2D2D] hover:text-[#CC7722] transition-colors">About</Link>
             </div>
-            <div className="flex items-center space-x-4">
-              <button className="text-[#2D2D2D] hover:text-[#CC7722] transition-colors">Sign In</button>
-              <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
-                Get Started
-              </button>
-            </div>
           </div>
         </div>
       </nav>
 
-      {/* Header */}
-      <div className="pt-24 pb-12 bg-gradient-to-br from-[#4A7BA7]/10 via-[#FAF7F0] to-[#5A7247]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold text-[#2D2D2D] mb-4">
-              Discover Your Next
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#CC7722] to-[#E67E22]">
-                Adventure
-              </span>
-            </h1>
-            <p className="text-xl text-[#5A5A5A] max-w-2xl mx-auto">
-              Explore {filteredRaces.length} races across South Africa's most stunning landscapes
-            </p>
-          </div>
+      {/* Hero Section */}
+      <section className="pt-24 pb-12 bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Discover Your Next Race
+          </h1>
+          <p className="text-xl text-white/90 mb-8">
+            {filteredRaces.length} upcoming races across South Africa
+          </p>
 
           {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-lg p-2 flex items-center">
-              <div className="flex-1 flex items-center space-x-3 px-4">
-                <svg className="w-5 h-5 text-[#5A5A5A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search for races, locations, or events..."
-                  className="flex-1 py-3 outline-none text-[#2D2D2D]"
-                />
-              </div>
-              <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-8 py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
-                Search
+          <div className="max-w-2xl">
+            <div className="flex gap-2 p-2 bg-white rounded-2xl shadow-lg">
+              <input
+                type="text"
+                placeholder="Search races or locations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl border-0 text-[#2D2D2D] focus:outline-none focus:ring-2 focus:ring-[#CC7722]"
+              />
+              <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
+                <Search className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <div className="lg:w-72 flex-shrink-0">
-            <div className="bg-white rounded-2xl p-6 shadow-md sticky top-24">
-              <h3 className="text-xl font-bold text-[#2D2D2D] mb-6 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-[#CC7722]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                Filters
-              </h3>
-
-              {/* Category Filter */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Category</h4>
-                <div className="space-y-2">
-                  {categories.map(category => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-4 py-2 rounded-xl transition-all ${
-                        selectedCategory === category
-                          ? 'bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white shadow-md'
-                          : 'bg-[#FAF7F0] text-[#2D2D2D] hover:bg-[#C2B280]/20'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-2xl p-6 border border-[#C2B280]/20 sticky top-24 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <Filter className="w-5 h-5 text-[#CC7722]" />
+                <h2 className="text-lg font-bold text-[#2D2D2D]">Filters</h2>
               </div>
 
               {/* Province Filter */}
               <div className="mb-6">
-                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Province</h4>
+                <label className="block text-sm font-semibold text-[#2D2D2D] mb-2">
+                  Province
+                </label>
                 <select
                   value={selectedProvince}
                   onChange={(e) => setSelectedProvince(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#FAF7F0] border-2 border-[#C2B280]/20 text-[#2D2D2D] focus:border-[#CC7722] focus:outline-none"
+                  className="w-full px-3 py-2 border border-[#C2B280]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CC7722] bg-[#FAF7F0] text-[#2D2D2D]"
                 >
-                  {provinces.map(province => (
-                    <option key={province} value={province}>{province}</option>
-                  ))}
+                  <option value="all">All Provinces</option>
+                  <option value="Western Cape">Western Cape</option>
+                  <option value="Gauteng">Gauteng</option>
+                  <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                  <option value="Eastern Cape">Eastern Cape</option>
+                  <option value="Mpumalanga">Mpumalanga</option>
+                  <option value="Limpopo">Limpopo</option>
+                  <option value="North West">North West</option>
+                  <option value="Free State">Free State</option>
+                  <option value="Northern Cape">Northern Cape</option>
                 </select>
               </div>
 
-              {/* Distance Filter */}
+              {/* Race Type Filter */}
               <div className="mb-6">
-                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Distance</h4>
-                <div className="space-y-2">
-                  {['< 10km', '10-21km', '21-42km', '42km+', 'Ultra'].map(distance => (
-                    <label key={distance} className="flex items-center space-x-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded border-[#C2B280] text-[#CC7722] focus:ring-[#CC7722]" />
-                      <span className="text-[#2D2D2D]">{distance}</span>
-                    </label>
-                  ))}
-                </div>
+                <label className="block text-sm font-semibold text-[#2D2D2D] mb-2">
+                  Race Type
+                </label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#C2B280]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CC7722] bg-[#FAF7F0] text-[#2D2D2D]"
+                >
+                  <option value="all">All Types</option>
+                  <option value="trail">Trail Running</option>
+                  <option value="road">Road Running</option>
+                  <option value="ultra">Ultra Marathon</option>
+                  <option value="cycling">Road Cycling</option>
+                  <option value="mtb">Mountain Biking</option>
+                  <option value="triathlon">Triathlon</option>
+                  <option value="obstacle">Obstacle Course</option>
+                  <option value="duathlon">Duathlon</option>
+                  <option value="swimming">Swimming</option>
+                </select>
               </div>
 
-              {/* Reset Filters */}
+              {/* Difficulty Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-[#2D2D2D] mb-2">
+                  Difficulty
+                </label>
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#C2B280]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CC7722] bg-[#FAF7F0] text-[#2D2D2D]"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="hard">Hard</option>
+                  <option value="extreme">Extreme</option>
+                </select>
+              </div>
+
               <button
                 onClick={() => {
-                  setSelectedCategory('All');
-                  setSelectedProvince('All');
+                  setSelectedProvince('all')
+                  setSelectedType('all')
+                  setSelectedDifficulty('all')
+                  setSearchQuery('')
                 }}
-                className="w-full border-2 border-[#C2B280]/30 text-[#5A5A5A] py-3 rounded-xl hover:bg-[#FAF7F0] transition-all font-semibold"
+                className="w-full py-2 text-sm text-[#CC7722] hover:text-[#E67E22] font-semibold hover:bg-[#FAF7F0] rounded-xl transition-colors"
               >
-                Reset Filters
+                Clear All Filters
               </button>
+            </div>
+          </aside>
+
+          {/* Race Cards Grid */}
+          <main className="flex-1">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#CC7722] mx-auto"></div>
+                <p className="text-[#5A5A5A] mt-4">Loading races...</p>
+              </div>
+            ) : filteredRaces.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl border border-[#C2B280]/20 shadow-sm">
+                <p className="text-[#5A5A5A] text-lg mb-4">No races found matching your criteria.</p>
+                <button
+                  onClick={() => {
+                    setSelectedProvince('all')
+                    setSelectedType('all')
+                    setSelectedDifficulty('all')
+                    setSearchQuery('')
+                  }}
+                  className="text-[#CC7722] hover:text-[#E67E22] font-semibold"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {filteredRaces.map((race) => (
+                  <RaceCard key={race.id} race={race} />
+                ))}
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RaceCard({ race }: { race: Race }) {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-ZA', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy':
+        return 'bg-[#5A7247]/10 text-[#5A7247] border-[#5A7247]/30'
+      case 'moderate':
+        return 'bg-[#CC7722]/10 text-[#CC7722] border-[#CC7722]/30'
+      case 'hard':
+        return 'bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/30'
+      case 'extreme':
+        return 'bg-[#D4526E]/10 text-[#D4526E] border-[#D4526E]/30'
+      default:
+        return 'bg-[#C2B280]/10 text-[#C2B280] border-[#C2B280]/30'
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      trail: 'Trail',
+      road: 'Road',
+      ultra: 'Ultra',
+      cycling: 'Cycling',
+      mtb: 'MTB',
+      triathlon: 'Triathlon',
+      obstacle: 'OCR',
+      duathlon: 'Duathlon',
+      swimming: 'Swim',
+    }
+    return labels[type] || type
+  }
+
+  return (
+    <Link href={`/races/${race.slug}`} className="block group">
+      <div className="bg-white rounded-2xl border border-[#C2B280]/20 hover:border-[#CC7722] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden">
+        {/* Image */}
+        <div className="h-48 bg-gradient-to-br from-[#4A7BA7] to-[#5A7247] relative overflow-hidden">
+          {race.image_url ? (
+            <img 
+              src={race.image_url} 
+              alt={race.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <TrendingUp className="w-16 h-16 text-white opacity-40" />
+            </div>
+          )}
+          
+          {/* Badges */}
+          <div className="absolute top-4 right-4 flex gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm ${getDifficultyColor(race.difficulty)}`}>
+              {race.difficulty.charAt(0).toUpperCase() + race.difficulty.slice(1)}
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-[#2D2D2D] backdrop-blur-sm">
+              {getTypeLabel(race.race_type)}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-[#2D2D2D] mb-3 group-hover:text-[#CC7722] transition-colors line-clamp-2">
+            {race.name}
+          </h3>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-[#5A5A5A]">
+              <Calendar className="w-4 h-4 flex-shrink-0 text-[#CC7722]" />
+              <span className="text-sm font-medium">{formatDate(race.race_date)}</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-[#5A5A5A]">
+              <MapPin className="w-4 h-4 flex-shrink-0 text-[#CC7722]" />
+              <span className="text-sm">
+                {race.location_city}, {race.location_province}
+              </span>
             </div>
           </div>
 
-          {/* Race Cards Grid */}
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-[#5A5A5A]">
-                Showing <span className="font-semibold text-[#CC7722]">{filteredRaces.length}</span> races
-              </p>
-              <select className="px-4 py-2 rounded-xl bg-white border-2 border-[#C2B280]/20 text-[#2D2D2D] focus:border-[#CC7722] focus:outline-none">
-                <option>Sort: Upcoming</option>
-                <option>Sort: Distance</option>
-                <option>Sort: Price</option>
-                <option>Sort: Popularity</option>
-              </select>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {filteredRaces.map(race => (
-                <div key={race.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group">
-                  <div className={`h-48 bg-gradient-to-br ${race.color} relative`}>
-                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
-                      [Race Image: {race.name}]
-                    </div>
-                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                      <span className="bg-white/90 backdrop-blur-sm text-[#2D2D2D] px-3 py-1 rounded-full text-sm font-medium">
-                        {race.category}
-                      </span>
-                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all">
-                        <svg className="w-5 h-5 text-[#CC7722]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-3 group-hover:text-[#CC7722] transition-colors">
-                      {race.name}
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
-                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        <span className="truncate">{race.location}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
-                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>{new Date(race.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
-                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        <span>{race.distance}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
-                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                        </svg>
-                        <span>{race.elevation} gain</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-[#C2B280]/20">
-                      <div>
-                        <div className="text-2xl font-bold text-[#CC7722]">{race.price}</div>
-                        <div className="text-xs text-[#5A5A5A]">Entry fee</div>
-                      </div>
-                      <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
-                        View Race
-                      </button>
-                    </div>
-                  </div>
-                </div>
+          {/* Distances */}
+          {race.distances && race.distances.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {race.distances.slice(0, 3).map((dist: any, idx: number) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-[#FAF7F0] text-[#5A5A5A] rounded-full text-xs font-medium border border-[#C2B280]/20"
+                >
+                  {dist.distance}
+                </span>
               ))}
+              {race.distances.length > 3 && (
+                <span className="px-3 py-1 bg-[#FAF7F0] text-[#5A5A5A] rounded-full text-xs font-medium border border-[#C2B280]/20">
+                  +{race.distances.length - 3} more
+                </span>
+              )}
             </div>
+          )}
 
-            {/* Load More */}
-            <div className="text-center mt-12">
-              <button className="border-2 border-[#CC7722] text-[#CC7722] px-8 py-4 rounded-full hover:bg-[#CC7722] hover:text-white transition-all font-semibold">
-                Load More Races
-              </button>
+          {/* View Details Button */}
+          <div className="pt-4 border-t border-[#C2B280]/20">
+            <div className="text-[#CC7722] font-semibold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+              View Details
+              <ArrowRight className="w-4 h-4" />
             </div>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-[#2D2D2D] text-white py-12 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-white/70">
-            © 2025 RaceRadar. Built with ❤️ for South African athletes.
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
+    </Link>
+  )
 }
