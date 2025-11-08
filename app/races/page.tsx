@@ -1,336 +1,264 @@
-// src/app/races/page.tsx
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Search, Calendar, MapPin, TrendingUp, Filter } from 'lucide-react'
-import Link from 'next/link'
-
-interface Race {
-  id: string
-  name: string
-  slug: string
-  race_date: string
-  location_city: string
-  location_province: string
-  race_type: string
-  terrain: string
-  difficulty: string
-  distances: any[]
-  image_url: string | null
-}
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function RacesPage() {
-  const [races, setRaces] = useState<Race[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedProvince, setSelectedProvince] = useState('all')
-  const [selectedType, setSelectedType] = useState('all')
-  const [selectedDifficulty, setSelectedDifficulty] = useState('all')
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedProvince, setSelectedProvince] = useState('All');
 
-  useEffect(() => {
-    fetchRaces()
-  }, [selectedProvince, selectedType, selectedDifficulty])
+  const categories = ['All', 'Trail Running', 'Road Running', 'Obstacle Course Racing', 'Triathlon', 'Cycling', 'Open Water Swimming'];
+  const provinces = ['All', 'Western Cape', 'Gauteng', 'KwaZulu-Natal', 'Eastern Cape', 'Free State', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West'];
 
-  async function fetchRaces() {
-    setLoading(true)
-    let query = supabase
-      .from('races')
-      .select('*')
-      .eq('status', 'active')
-      .gte('race_date', new Date().toISOString().split('T')[0]) // Only future races
-      .order('race_date', { ascending: true })
+  const races = [
+    { id: 1, name: "Table Mountain Challenge", location: "Western Cape, Cape Town", date: "2025-12-15", distance: "28km", elevation: "1800m", category: "Trail Running", price: "R450", color: "from-[#4A7BA7] to-[#5A7247]" },
+    { id: 2, name: "Two Oceans Marathon", location: "Western Cape, Cape Town", date: "2026-04-18", distance: "56km", elevation: "350m", category: "Road Running", price: "R580", color: "from-[#CC7722] to-[#E67E22]" },
+    { id: 3, name: "Otter Trail Run", location: "Western Cape, Garden Route", date: "2026-05-10", distance: "42km", elevation: "2400m", category: "Trail Running", price: "R650", color: "from-[#5A7247] to-[#4A7BA7]" },
+    { id: 4, name: "Comrades Marathon", location: "KwaZulu-Natal, Durban to PMB", date: "2026-06-14", distance: "87km", elevation: "900m", category: "Road Running", price: "R520", color: "from-[#D4526E] to-[#E67E22]" },
+    { id: 5, name: "Midmar Mile", location: "KwaZulu-Natal, Howick", date: "2026-02-08", distance: "1.6km", elevation: "0m", category: "Open Water Swimming", price: "R250", color: "from-[#4A7BA7] to-[#CC7722]" },
+    { id: 6, name: "Warrior Race Pretoria", location: "Gauteng, Pretoria", date: "2026-03-22", distance: "8km", elevation: "150m", category: "Obstacle Course Racing", price: "R380", color: "from-[#E67E22] to-[#D4526E]" },
+    { id: 7, name: "Momentum 94.7 Cycle Challenge", location: "Gauteng, Johannesburg", date: "2025-11-16", distance: "94km", elevation: "600m", category: "Cycling", price: "R420", color: "from-[#5A7247] to-[#CC7722]" },
+    { id: 8, name: "Wild Coast Trail Run", location: "Eastern Cape, Coffee Bay", distance: "21km", date: "2026-07-05", elevation: "1200m", category: "Trail Running", price: "R400", color: "from-[#4A7BA7] to-[#5A7247]" },
+    { id: 9, name: "Ironman South Africa", location: "Eastern Cape, Nelson Mandela Bay", date: "2026-04-05", distance: "226km", elevation: "1500m", category: "Triathlon", price: "R3500", color: "from-[#CC7722] to-[#D4526E]" },
+  ];
 
-    if (selectedProvince !== 'all') {
-      query = query.eq('location_province', selectedProvince)
-    }
-
-    if (selectedType !== 'all') {
-      query = query.eq('race_type', selectedType)
-    }
-
-    if (selectedDifficulty !== 'all') {
-      query = query.eq('difficulty', selectedDifficulty)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Error fetching races:', error)
-    } else {
-      setRaces(data || [])
-    }
-    setLoading(false)
-  }
-
-  const filteredRaces = races.filter((race) =>
-    race.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    race.location_city.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredRaces = races.filter(race => {
+    const categoryMatch = selectedCategory === 'All' || race.category === selectedCategory;
+    const provinceMatch = selectedProvince === 'All' || race.location.includes(selectedProvince);
+    return categoryMatch && provinceMatch;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-2 w-fit">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-[#FAF7F0]">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full bg-[#FAF7F0]/95 backdrop-blur-sm z-50 border-b border-[#C2B280]/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#CC7722] to-[#E67E22] rounded-lg"></div>
+              <span className="text-2xl font-bold text-[#2D2D2D]">RaceRadar</span>
+            </Link>
+            <div className="hidden md:flex space-x-8">
+              <Link href="/" className="text-[#2D2D2D] hover:text-[#CC7722] transition-colors">Home</Link>
+              <Link href="/races" className="text-[#CC7722] font-semibold">Discover Races</Link>
+              <Link href="/about" className="text-[#2D2D2D] hover:text-[#CC7722] transition-colors">About</Link>
             </div>
-            <span className="text-2xl font-bold text-slate-900">RaceRadar</span>
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Find Your Next Race
-          </h1>
-          <p className="text-xl text-blue-100 mb-8">
-            {filteredRaces.length} upcoming races across South Africa
-          </p>
-
-          {/* Search Bar */}
-          <div className="max-w-2xl">
-            <div className="flex gap-2 p-2 bg-white rounded-xl">
-              <input
-                type="text"
-                placeholder="Search races or locations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-lg border-0 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2">
-                <Search className="w-5 h-5" />
+            <div className="flex items-center space-x-4">
+              <button className="text-[#2D2D2D] hover:text-[#CC7722] transition-colors">Sign In</button>
+              <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
+                Get Started
               </button>
             </div>
           </div>
         </div>
-      </section>
+      </nav>
 
-      <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="pt-24 pb-12 bg-gradient-to-br from-[#4A7BA7]/10 via-[#FAF7F0] to-[#5A7247]/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold text-[#2D2D2D] mb-4">
+              Discover Your Next
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#CC7722] to-[#E67E22]">
+                Adventure
+              </span>
+            </h1>
+            <p className="text-xl text-[#5A5A5A] max-w-2xl mx-auto">
+              Explore {filteredRaces.length} races across South Africa's most stunning landscapes
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg p-2 flex items-center">
+              <div className="flex-1 flex items-center space-x-3 px-4">
+                <svg className="w-5 h-5 text-[#5A5A5A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search for races, locations, or events..."
+                  className="flex-1 py-3 outline-none text-[#2D2D2D]"
+                />
+              </div>
+              <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-8 py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl p-6 border border-slate-200 sticky top-24">
-              <div className="flex items-center gap-2 mb-6">
-                <Filter className="w-5 h-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
+          <div className="lg:w-72 flex-shrink-0">
+            <div className="bg-white rounded-2xl p-6 shadow-md sticky top-24">
+              <h3 className="text-xl font-bold text-[#2D2D2D] mb-6 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-[#CC7722]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+              </h3>
+
+              {/* Category Filter */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Category</h4>
+                <div className="space-y-2">
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`w-full text-left px-4 py-2 rounded-xl transition-all ${
+                        selectedCategory === category
+                          ? 'bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white shadow-md'
+                          : 'bg-[#FAF7F0] text-[#2D2D2D] hover:bg-[#C2B280]/20'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Province Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Province
-                </label>
+                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Province</h4>
                 <select
                   value={selectedProvince}
                   onChange={(e) => setSelectedProvince(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-[#FAF7F0] border-2 border-[#C2B280]/20 text-[#2D2D2D] focus:border-[#CC7722] focus:outline-none"
                 >
-                  <option value="all">All Provinces</option>
-                  <option value="Western Cape">Western Cape</option>
-                  <option value="Gauteng">Gauteng</option>
-                  <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-                  <option value="Eastern Cape">Eastern Cape</option>
-                  <option value="Mpumalanga">Mpumalanga</option>
-                  <option value="Limpopo">Limpopo</option>
-                  <option value="North West">North West</option>
-                  <option value="Free State">Free State</option>
-                  <option value="Northern Cape">Northern Cape</option>
+                  {provinces.map(province => (
+                    <option key={province} value={province}>{province}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* Race Type Filter */}
+              {/* Distance Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Race Type
-                </label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Types</option>
-                  <option value="trail">Trail Running</option>
-                  <option value="road">Road Running</option>
-                  <option value="ultra">Ultra Marathon</option>
-                  <option value="cycling">Road Cycling</option>
-                  <option value="mtb">Mountain Biking</option>
-                  <option value="triathlon">Triathlon</option>
-                  <option value="obstacle">Obstacle Course</option>
-                  <option value="swimming">Swimming</option>
-                </select>
+                <h4 className="font-semibold text-[#2D2D2D] mb-3 text-sm uppercase tracking-wide">Distance</h4>
+                <div className="space-y-2">
+                  {['< 10km', '10-21km', '21-42km', '42km+', 'Ultra'].map(distance => (
+                    <label key={distance} className="flex items-center space-x-3 cursor-pointer">
+                      <input type="checkbox" className="w-5 h-5 rounded border-[#C2B280] text-[#CC7722] focus:ring-[#CC7722]" />
+                      <span className="text-[#2D2D2D]">{distance}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              {/* Difficulty Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Difficulty
-                </label>
-                <select
-                  value={selectedDifficulty}
-                  onChange={(e) => setSelectedDifficulty(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Levels</option>
-                  <option value="easy">Easy</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="hard">Hard</option>
-                  <option value="extreme">Extreme</option>
-                </select>
-              </div>
-
+              {/* Reset Filters */}
               <button
                 onClick={() => {
-                  setSelectedProvince('all')
-                  setSelectedType('all')
-                  setSelectedDifficulty('all')
-                  setSearchQuery('')
+                  setSelectedCategory('All');
+                  setSelectedProvince('All');
                 }}
-                className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="w-full border-2 border-[#C2B280]/30 text-[#5A5A5A] py-3 rounded-xl hover:bg-[#FAF7F0] transition-all font-semibold"
               >
-                Clear All Filters
+                Reset Filters
               </button>
             </div>
-          </aside>
+          </div>
 
           {/* Race Cards Grid */}
-          <main className="flex-1">
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-slate-600 mt-4">Loading races...</p>
-              </div>
-            ) : filteredRaces.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-                <p className="text-slate-600 text-lg">No races found matching your criteria.</p>
-                <button
-                  onClick={() => {
-                    setSelectedProvince('all')
-                    setSelectedType('all')
-                    setSelectedDifficulty('all')
-                    setSearchQuery('')
-                  }}
-                  className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Clear filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {filteredRaces.map((race) => (
-                  <RaceCard key={race.id} race={race} />
-                ))}
-              </div>
-            )}
-          </main>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function RaceCard({ race }: { race: Race }) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-ZA', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'bg-green-100 text-green-700'
-      case 'moderate':
-        return 'bg-yellow-100 text-yellow-700'
-      case 'hard':
-        return 'bg-orange-100 text-orange-700'
-      case 'extreme':
-        return 'bg-red-100 text-red-700'
-      default:
-        return 'bg-slate-100 text-slate-700'
-    }
-  }
-
-  const getTypeLabel = (type: string) => {
-    const labels: { [key: string]: string } = {
-      trail: 'Trail',
-      road: 'Road',
-      ultra: 'Ultra',
-      cycling: 'Cycling',
-      mtb: 'MTB',
-      triathlon: 'Triathlon',
-      obstacle: 'OCR',
-      swimming: 'Swim',
-    }
-    return labels[type] || type
-  }
-
-  return (
-    <Link href={`/races/${race.slug}`}>
-      <div className="bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer overflow-hidden group">
-        {/* Image placeholder */}
-        <div className="h-48 bg-gradient-to-br from-blue-400 to-cyan-500 relative overflow-hidden">
-          {race.image_url ? (
-            <img src={race.image_url} alt={race.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <TrendingUp className="w-16 h-16 text-white opacity-50" />
+          <div className="flex-1">
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-[#5A5A5A]">
+                Showing <span className="font-semibold text-[#CC7722]">{filteredRaces.length}</span> races
+              </p>
+              <select className="px-4 py-2 rounded-xl bg-white border-2 border-[#C2B280]/20 text-[#2D2D2D] focus:border-[#CC7722] focus:outline-none">
+                <option>Sort: Upcoming</option>
+                <option>Sort: Distance</option>
+                <option>Sort: Price</option>
+                <option>Sort: Popularity</option>
+              </select>
             </div>
-          )}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(race.difficulty)}`}>
-              {race.difficulty}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-white text-slate-700">
-              {getTypeLabel(race.race_type)}
-            </span>
-          </div>
-        </div>
 
-        <div className="p-6">
-          <h3 className="text-xl font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-            {race.name}
-          </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              {filteredRaces.map(race => (
+                <div key={race.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group">
+                  <div className={`h-48 bg-gradient-to-br ${race.color} relative`}>
+                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
+                      [Race Image: {race.name}]
+                    </div>
+                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                      <span className="bg-white/90 backdrop-blur-sm text-[#2D2D2D] px-3 py-1 rounded-full text-sm font-medium">
+                        {race.category}
+                      </span>
+                      <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all">
+                        <svg className="w-5 h-5 text-[#CC7722]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
 
-          <div className="flex items-center gap-2 text-slate-600 mb-2">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">{formatDate(race.race_date)}</span>
-          </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-3 group-hover:text-[#CC7722] transition-colors">
+                      {race.name}
+                    </h3>
 
-          <div className="flex items-center gap-2 text-slate-600 mb-4">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">
-              {race.location_city}, {race.location_province}
-            </span>
-          </div>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
+                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        <span className="truncate">{race.location}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
+                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>{new Date(race.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
+                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        <span>{race.distance}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-[#5A5A5A]">
+                        <svg className="w-4 h-4 text-[#CC7722] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                        <span>{race.elevation} gain</span>
+                      </div>
+                    </div>
 
-          {race.distances && race.distances.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {race.distances.slice(0, 3).map((dist: any, idx: number) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-medium"
-                >
-                  {dist.distance}
-                </span>
+                    <div className="flex items-center justify-between pt-4 border-t border-[#C2B280]/20">
+                      <div>
+                        <div className="text-2xl font-bold text-[#CC7722]">{race.price}</div>
+                        <div className="text-xs text-[#5A5A5A]">Entry fee</div>
+                      </div>
+                      <button className="bg-gradient-to-r from-[#CC7722] to-[#E67E22] text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
+                        View Race
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-              {race.distances.length > 3 && (
-                <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-medium">
-                  +{race.distances.length - 3} more
-                </span>
-              )}
             </div>
-          )}
+
+            {/* Load More */}
+            <div className="text-center mt-12">
+              <button className="border-2 border-[#CC7722] text-[#CC7722] px-8 py-4 rounded-full hover:bg-[#CC7722] hover:text-white transition-all font-semibold">
+                Load More Races
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </Link>
-  )
+
+      {/* Footer */}
+      <footer className="bg-[#2D2D2D] text-white py-12 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-sm text-white/70">
+            © 2025 RaceRadar. Built with ❤️ for South African athletes.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
