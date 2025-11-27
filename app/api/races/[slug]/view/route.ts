@@ -2,16 +2,25 @@
 import { createClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
+interface RouteParams {
+  params: Promise<{
+    slug: string;
+  }>;
+}
+
 export async function POST(
   request: Request,
-  { params }: { params: { slug: string } }
+  context: RouteParams
 ) {
   try {
-    const supabase = await createClient();
+    // Await params in Next.js 15+
+    const { slug } = await context.params;
+    
+    const supabase = await  createClient();
     
     // Increment view count using SQL to avoid race conditions
     const { data, error } = await supabase.rpc('increment_race_view', {
-      race_slug: params.slug
+      race_slug: slug
     });
 
     if (error) {
