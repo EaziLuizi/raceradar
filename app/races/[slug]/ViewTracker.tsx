@@ -15,7 +15,7 @@ export default function ViewTracker({ slug }: ViewTrackerProps) {
         method: 'POST',
       }).catch((error) => {
         // Silently fail - view tracking shouldn't break the page
-        console.error('Failed to track view:', error);
+        console.error(`Failed to track view: ${slug} -`, error);
       });
     }, 1000); // 1 second delay
 
